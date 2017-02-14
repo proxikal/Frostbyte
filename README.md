@@ -52,6 +52,22 @@ You will have the option to set AutoRole, Greeting, ByeMsg and even the channels
 More commands and keys coming soon!
   
 ## Want to contribute?
-> Make a pull request! If it **passes** I will merge!  
+> Make a pull request to `develop` If it **passes** I will merge!
   
-
+### Code Specifications
+  
+```
+1. gofmt -s your code!
+2. golint your code!
+3. English commenting only!
+4. No ineffectual assignments!
+5. No suspicious constructs!
+```
+You can run your branch through [Go Report Card](https://goreportcard.com) Which will check for all cases above  
+We need to maintain an `A` or `A+` Standard.  
+  
+### Master branch
+> Stable build of Frostbyte available for use!  
+Develop branch will be merged to master every few days.  
+We will work on a wikipedia explaining features and usage soon!
+  
