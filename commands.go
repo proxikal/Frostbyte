@@ -1,14 +1,30 @@
 package main
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
 )
+
+// GetPageContents - Get page content based on URL.
+// url: Valid url of image.
+func GetPageContents(url string) ([]byte, error) {
+	req, err := http.NewRequest("GET", url, nil)
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	return body, err
+}
 
 // CommandHandler - Handle the commands and Auto Response System
 // bot: Main Object with all your settings.
@@ -28,22 +44,25 @@ func (bot *Object) CommandHandler(s *discordgo.Session, m *discordgo.MessageCrea
 	// Execute Auto Response System.
 	if strings.Contains(m.Content, prefix+"auto ") == false && strings.Contains(m.Content, prefix+"delauto ") == false {
 		var ars map[string]string
-		if _, err := os.Stat("autoresponse.json"); err == nil {
-			io, err := ioutil.ReadFile("autoresponse.json")
-			if err == nil {
-				json.Unmarshal(io, &ars)
-				for t, r := range ars {
-					if strings.Contains(t, "&") {
-						// Using the Contains system.
-						if strings.Contains(m.Content, t) {
-							bot.Parse(s, m, t, r)
-						}
-					} else {
-						// Just a basic trigger.
-						if m.Content == t {
-							bot.Parse(s, m, t, r)
-						}
-					}
+		if _, err := os.Stat("autoresponse.json"); err != nil {
+			return
+		}
+		io, err := ioutil.ReadFile("autoresponse.json")
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		json.Unmarshal(io, &ars)
+		for t, r := range ars {
+			if strings.Contains(t, "&") {
+				// Using the Contains system.
+				if strings.Contains(m.Content, t) {
+					bot.Parse(s, m, t, r)
+				}
+			} else {
+				// Just a basic trigger.
+				if m.Content == t {
+					bot.Parse(s, m, t, r)
 				}
 			}
 		}
@@ -82,6 +101,10 @@ func (bot *Object) MasterCommands(s *discordgo.Session, m *discordgo.MessageCrea
 				err = ioutil.WriteFile("config.json", js, 0777)
 				if err != nil {
 					fmt.Println(err)
+					_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprint(err))
+					if err != nil {
+						fmt.Println(err)
+					}
 				}
 				_, err = s.ChannelMessageSend(m.ChannelID, "You have set the auto role to `"+role+"`")
 				if err != nil {
@@ -107,12 +130,20 @@ func (bot *Object) MasterCommands(s *discordgo.Session, m *discordgo.MessageCrea
 		js, err := json.MarshalIndent(bot, "", "  ")
 		if err != nil {
 			fmt.Println(err)
+			_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprint(err))
+			if err != nil {
+				fmt.Println(err)
+			}
 			return
 		}
 		// Write entire database to file.
 		err = ioutil.WriteFile("config.json", js, 0777)
 		if err != nil {
 			fmt.Println(err)
+			_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprint(err))
+			if err != nil {
+				fmt.Println(err)
+			}
 		} else {
 			_, err = s.ChannelMessageSend(m.ChannelID, "You have set the greeting to `"+msg+"`")
 			if err != nil {
@@ -133,12 +164,20 @@ func (bot *Object) MasterCommands(s *discordgo.Session, m *discordgo.MessageCrea
 			err = ioutil.WriteFile("autoresponse.json", []byte("{}"), 0777)
 			if err != nil {
 				fmt.Println(err)
+				_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprint(err))
+				if err != nil {
+					fmt.Println(err)
+				}
 				return
 			}
 		}
 		io, err := ioutil.ReadFile("autoresponse.json")
 		if err != nil {
 			fmt.Println(err)
+			_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprint(err))
+			if err != nil {
+				fmt.Println(err)
+			}
 			return
 		}
 		json.Unmarshal(io, &ars)
@@ -146,11 +185,19 @@ func (bot *Object) MasterCommands(s *discordgo.Session, m *discordgo.MessageCrea
 		eo, err := json.MarshalIndent(ars, "", "  ")
 		if err != nil {
 			fmt.Println(err)
+			_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprint(err))
+			if err != nil {
+				fmt.Println(err)
+			}
 			return
 		}
 		err = ioutil.WriteFile("autoresponse.json", eo, 0777)
 		if err != nil {
 			fmt.Println(err)
+			_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprint(err))
+			if err != nil {
+				fmt.Println(err)
+			}
 			return
 		}
 		_, err = s.ChannelMessageSend(m.ChannelID, "Added `"+trigger+"` with the response:\n```"+response+"```")
@@ -159,6 +206,7 @@ func (bot *Object) MasterCommands(s *discordgo.Session, m *discordgo.MessageCrea
 		}
 	}
 
+	// Command to delete a rule from the A.R.S - delauto triggername or delauto &triggername
 	if strings.HasPrefix(m.Content, prefix+"delauto ") {
 		trigger := strings.Replace(m.Content, prefix+"delauto ", "", -1)
 		if trigger != "" {
@@ -166,6 +214,10 @@ func (bot *Object) MasterCommands(s *discordgo.Session, m *discordgo.MessageCrea
 			io, err := ioutil.ReadFile("autoresponse.json")
 			if err != nil {
 				fmt.Println(err)
+				_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprint(err))
+				if err != nil {
+					fmt.Println(err)
+				}
 				return
 			}
 			json.Unmarshal(io, &ars)
@@ -174,13 +226,65 @@ func (bot *Object) MasterCommands(s *discordgo.Session, m *discordgo.MessageCrea
 				js, err := json.MarshalIndent(ars, "", "  ")
 				if err != nil {
 					fmt.Println(err)
+					_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprint(err))
+					if err != nil {
+						fmt.Println(err)
+					}
 					return
 				}
 				err = ioutil.WriteFile("autoresponse.json", js, 0777)
 				if err != nil {
 					fmt.Println(err)
+					_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprint(err))
+					if err != nil {
+						fmt.Println(err)
+					}
 				}
 			}
+		}
+	}
+
+	// Change Bot Avatar.
+	if strings.HasPrefix(m.Content, prefix+"avatar") {
+		var img []byte
+		if strings.Replace(m.Content, prefix+"avatar", "", -1) == "" {
+			img, err = ioutil.ReadFile("avatar.png")
+			if err != nil {
+				fmt.Println(err)
+				_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprint(err))
+				if err != nil {
+					fmt.Println(err)
+				}
+				return
+			}
+		} else {
+			// Collect the avatar from a link.
+			url := strings.Replace(m.Content, prefix+"avatar ", "", -1)
+			img, err = GetPageContents(url)
+			if err != nil {
+				fmt.Println(err)
+				_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprint(err))
+				if err != nil {
+					fmt.Println(err)
+				}
+				return
+			}
+		}
+		base64 := base64.StdEncoding.EncodeToString(img)
+		avatar := fmt.Sprintf("data:image/png;base64,%s", string(base64))
+		_, err = s.UserUpdate("", "", s.State.User.Username, avatar, "")
+		if err != nil {
+			fmt.Println(err)
+			_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprint(err))
+			if err != nil {
+				fmt.Println(err)
+			}
+			return
+		}
+		_, err = s.ChannelMessageSend(m.ChannelID, "Successfully changed my avatar.")
+		if err != nil {
+			fmt.Println(err)
+			return
 		}
 	}
 }
