@@ -10,6 +10,10 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
+// CommandHandler: Handle the commands and Auto Response System
+// bot: Main Object with all your settings.
+// s: The Current Session between the bot and discord
+// m: The Message Object sent back from Discord.
 func (bot *Object) CommandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if bot.System == nil {
 		return
@@ -46,6 +50,10 @@ func (bot *Object) CommandHandler(s *discordgo.Session, m *discordgo.MessageCrea
 	}
 }
 
+// MasterCommands: Commands Available to people with Manage Server Permissions.
+// bot: Main Object with all your settings.
+// s: The Current Session between the bot and discord
+// m: The Message Object sent back from Discord.
 func (bot *Object) MasterCommands(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// Set the Prefix variable.
 	var prefix string = bot.System.Prefix
@@ -177,10 +185,13 @@ func (bot *Object) MasterCommands(s *discordgo.Session, m *discordgo.MessageCrea
 	}
 }
 
-// Parse Auto Response Keys into Data and than send Response (if any)
+// Parse: Auto Response Keys into Data and than send Response (if any)
+// bot: Main Object with all your settings.
+// s: The Current Session between the bot and discord
+// m: The Message Object sent back from Discord.
 // Auto Response System is Licensed by the MIT and used by many other bots on Discord.
 // Originally attempted with Paradox Bot (4/11/2016)
-// Pefected with Echo 2.0 Present - ?
+// Pefected with Echo 2.0!
 func (bot *Object) Parse(s *discordgo.Session, m *discordgo.MessageCreate, trigger, response string) {
 	var ChannelID string = m.ChannelID
 	// The bot cannot trigger the A.R.S (Would be really bad)

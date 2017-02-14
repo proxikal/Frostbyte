@@ -7,6 +7,10 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
+// GuildMemberAdd: DiscordGo Event for When someone joins your server.
+// bot: Main Object with all your settings.
+// s: The Current Session between the bot and discord
+// m: The Member Object sent back from Discord.
 func (bot *Object) GuildMemberAdd(s *discordgo.Session, m *discordgo.GuildMemberAdd) {
 	// Check to make sure the object is not nil.
 	if bot.System != nil {
@@ -67,6 +71,10 @@ func (bot *Object) GuildMemberAdd(s *discordgo.Session, m *discordgo.GuildMember
 	}
 }
 
+// GuildMemberRemove: DiscordGo Event for when someone leaves your server.
+// bot: Main Object with all your settings.
+// s: The Current Session between the bot and discord
+// m: The Member Object sent back from Discord.
 func (bot *Object) GuildMemberRemove(s *discordgo.Session, m *discordgo.GuildMemberRemove) {
 	// Set Bye Message to #general (Main Channel)
 	var byechan string = m.GuildID
@@ -96,6 +104,10 @@ func (bot *Object) GuildMemberRemove(s *discordgo.Session, m *discordgo.GuildMem
 	}
 }
 
+// Initiate: Register (if new); store messages.
+// bot: Main Object with all your settings.
+// s: The Current Session between the bot and discord
+// m: The Message Object sent back from Discord.
 func (bot *Object) Initiate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if bot.System == nil {
 		bot.Register(s, m)
