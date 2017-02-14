@@ -33,6 +33,19 @@ func (bot *Object) Save() {
 	}
 }
 
+/* Not functional yet
+func (bot *Object) PruneMessages() {
+	for {
+		<-time.After(1 * time.Hour)
+		for _, m := range bot.System.Messages {
+			if m.Timestamp < time.Now()-(3600*24*7) {
+
+			}
+		}
+	}
+}
+*/
+
 func (bot *Object) GetRoleID(s *discordgo.Session, role string) string {
 	var id string
 	r, err := s.State.Guild(bot.Guild)
