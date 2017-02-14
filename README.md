@@ -11,7 +11,7 @@ Once you setup and run Frostbyte for the first time to initate the databse
 You can set your `.greet` or `.autorole`  
 Once you set one of these systems your `config.json` file will change.
   
-You will have the option to set AutoRole, Greeting, ByeMsg and even the channels right from the config.json.  
+You will have the option to set AutoRole, Greeting, ByeMsg and even the channels right from the config.json!  
 
 ```
 {
