@@ -33,9 +33,9 @@ func (bot *Object) Save() {
 	}
 }
 
-func GetRoleID(s *discordgo.Session, GuildID string, role string) string {
+func (bot *Object) GetRoleID(s *discordgo.Session, role string) string {
 	var id string
-	r, err := s.State.Guild(GuildID)
+	r, err := s.State.Guild(bot.Guild)
 	if err == nil {
 		for _, v := range r.Roles {
 			if v.Name == role {
@@ -46,11 +46,11 @@ func GetRoleID(s *discordgo.Session, GuildID string, role string) string {
 	return id
 }
 
-func MemberHasRole(s *discordgo.Session, GuildID string, AuthorID string, role string) bool {
-	therole := GetRoleID(s, GuildID, role)
-	z, err := s.State.Member(GuildID, AuthorID)
+func (bot *Object) MemberHasRole(s *discordgo.Session, AuthorID string, role string) bool {
+	therole := bot.GetRoleID(s, role)
+	z, err := s.State.Member(bot.Guild, AuthorID)
 	if err != nil {
-		z, err = s.GuildMember(GuildID, AuthorID)
+		z, err = s.GuildMember(bot.Guild, AuthorID)
 		if err != nil {
 			fmt.Println("Error ->", err)
 			return false

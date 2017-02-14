@@ -54,7 +54,7 @@ func (bot *Object) MasterCommands(s *discordgo.Session, m *discordgo.MessageCrea
 	if strings.Contains(m.Content, prefix+"autorole ") {
 		role := strings.Split(m.Content, prefix+"autorole ")[1]
 		// Validate the role submitted.
-		if GetRoleID(s, bot.Guild, role) == "" {
+		if bot.GetRoleID(s, role) == "" {
 			_, err = s.ChannelMessageSend(m.ChannelID, "The role `"+role+"` doesn't exist.")
 			if err != nil {
 				fmt.Println(err)
@@ -177,11 +177,57 @@ func (bot *Object) MasterCommands(s *discordgo.Session, m *discordgo.MessageCrea
 	}
 }
 
+// Parse Auto Response Keys into Data and than send Response (if any)
+// Auto Response System is Licensed by the MIT and used by many other bots on Discord.
+// Originally attempted with Paradox Bot (4/11/2016)
+// Pefected with Echo 2.0 Present - ?
 func (bot *Object) Parse(s *discordgo.Session, m *discordgo.MessageCreate, trigger, response string) {
 	var ChannelID string = m.ChannelID
-
+	// The bot cannot trigger the A.R.S (Would be really bad)
 	if m.Author.ID == s.State.User.ID {
 		return
+	}
+
+	// If the user is a bot than we're going to ignore it.
+	if m.Author.Bot == true {
+		return
+	}
+
+	// Show channel name (with mention) #general, #lobby etc..
+	if strings.Contains(response, "{chan}") {
+		response = strings.Replace(response, "{chan}", "<#"+m.ChannelID+">", -1)
+	}
+
+	// Show channel topic.
+	if strings.Contains(response, "{topic}") {
+		ch, err := s.State.Channel(m.ChannelID)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		response = strings.Replace(response, "{topic}", ch.Topic, -1)
+	}
+
+	// List all the roles in a guild.
+	if strings.Contains(response, "{listroles}") {
+		var glob string
+		g, err := s.State.Guild(bot.Guild)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		if g.Roles != nil {
+			for _, r := range g.Roles {
+				glob = glob + r.Name + "\n"
+			}
+			if glob != "" {
+				response = strings.Replace(response, "{listroles}", glob, -1)
+			} else {
+				response = strings.Replace(response, "{listroles}", "[Empty]", -1)
+			}
+		} else {
+			response = strings.Replace(response, "{listroles}", "[Empty]", -1)
+		}
 	}
 
 	if strings.Contains(response, "{user}") {
