@@ -1,8 +1,6 @@
 # Frostbyte
-Open Source Discord Bot written in Golang (DiscordGo library by bwmarrin)
-  
-## Information
-> Basic Discord bot with a few commands and a light weight A.R.S  
+> Open Source Discord Bot written in Golang (DiscordGo library by bwmarrin)
+Comes with a few commands and a light weight A.R.S  
   
 **Commands**:
 ```
@@ -11,4 +9,16 @@ Open Source Discord Bot written in Golang (DiscordGo library by bwmarrin)
 .autorole role name
 .greet Greet Message
 ```
-More commands and keys coming soon! Feel free to contribute!
+  
+**A.R.S Keys**
+```
+{pm}    - Pms the user
+{user}  - Mentions the user
+{/user} - Says the users name.
+```
+More commands and keys coming soon!
+  
+## Want to contribute?
+> Make a pull request! If it passes I will merge!  
+  
+
