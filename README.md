@@ -1,4 +1,4 @@
-# Frostbyte ![Build Status](https://api.travis-ci.org/proxikal/Frostbyte.svg?branch=master) ![Go Report Card](https://goreportcard.com/badge/github.com/proxikal/Frostbyte)
+# Frostbyte ![Build Status](https://api.travis-ci.org/proxikal/Frostbyte.svg?branch=master) ![Go Report Card](https://goreportcard.com/badge/github.com/proxikal/Frostbyte) [![Discord Server](https://img.shields.io/badge/xTech%20Labs-%23general-blue.svg)](https://discord.gg/9PRs6xH)
 > Open Source Discord Bot written in Golang (DiscordGo library by bwmarrin)  
 Comes with a few commands and a light weight A.R.S  
   
