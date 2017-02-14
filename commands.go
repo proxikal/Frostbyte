@@ -5,26 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
 )
-
-// GetPageContents - Get page content based on URL.
-// url: Valid url of image.
-func GetPageContents(url string) ([]byte, error) {
-	req, err := http.NewRequest("GET", url, nil)
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	return body, err
-}
 
 // CommandHandler - Handle the commands and Auto Response System
 // bot: Main Object with all your settings.
@@ -34,14 +19,26 @@ func (bot *Object) CommandHandler(s *discordgo.Session, m *discordgo.MessageCrea
 	if bot.System == nil {
 		return
 	}
-	var prefix string = bot.System.Prefix
+	var prefix = bot.System.Prefix
 
 	// Check user for Manage Server permission.
 	if IsManager(s, bot.Guild, m.Author.ID) == true {
 		// Redirect to Master Commands.
-		bot.MasterCommands(s, m)
+		bot.AddARS(s, m, prefix)
+		bot.DeleteARS(s, m, prefix)
+		bot.AutoRoleCommand(s, m, prefix)
+		bot.GreetCommand(s, m, prefix)
+		bot.ChangeAvatar(s, m, prefix)
 	}
 	// Execute Auto Response System.
+	bot.Listen(s, m, prefix)
+}
+
+// Listen - Listens for A.R.S Commands.
+// bot: Main Object with all your settings.
+// s: The Current Session between the bot and discord
+// m: The Message Object sent back from Discord.
+func (bot *Object) Listen(s *discordgo.Session, m *discordgo.MessageCreate, prefix string) {
 	if strings.Contains(m.Content, prefix+"auto ") == false && strings.Contains(m.Content, prefix+"delauto ") == false {
 		var ars map[string]string
 		if _, err := os.Stat("autoresponse.json"); err != nil {
@@ -69,14 +66,53 @@ func (bot *Object) CommandHandler(s *discordgo.Session, m *discordgo.MessageCrea
 	}
 }
 
-// MasterCommands - Commands Available to people with Manage Server Permissions.
+// GreetCommand - greet new people with a message.
 // bot: Main Object with all your settings.
 // s: The Current Session between the bot and discord
 // m: The Message Object sent back from Discord.
-func (bot *Object) MasterCommands(s *discordgo.Session, m *discordgo.MessageCreate) {
-	// Set the Prefix variable.
-	var prefix string = bot.System.Prefix
+func (bot *Object) GreetCommand(s *discordgo.Session, m *discordgo.MessageCreate, prefix string) {
+	// Set the greet message.
+	if strings.Contains(m.Content, prefix+"greet ") {
+		// Make sure the Object isn't empty.
+		if bot.System == nil {
+			fmt.Println("Database Error")
+			return
+		}
+		msg := strings.Split(m.Content, prefix+"greet ")[1]
+		// Set the Greet Message
+		bot.System.Greeting = msg
+		// Marshal (Pretty) for saving to a file.
+		js, err := json.MarshalIndent(bot, "", "  ")
+		if err != nil {
+			fmt.Println(err)
+			_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprint(err))
+			if err != nil {
+				fmt.Println(err)
+			}
+			return
+		}
+		// Write entire database to file.
+		err = ioutil.WriteFile("config.json", js, 0777)
+		if err != nil {
+			fmt.Println(err)
+			_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprint(err))
+			if err != nil {
+				fmt.Println(err)
+			}
+		} else {
+			_, err = s.ChannelMessageSend(m.ChannelID, "You have set the greeting to `"+msg+"`")
+			if err != nil {
+				fmt.Println(err)
+			}
+		}
+	}
+}
 
+// AutoRoleCommand - give new people roles.
+// bot: Main Object with all your settings.
+// s: The Current Session between the bot and discord
+// m: The Message Object sent back from Discord.
+func (bot *Object) AutoRoleCommand(s *discordgo.Session, m *discordgo.MessageCreate, prefix string) {
 	// Set the autorole command.
 	if strings.Contains(m.Content, prefix+"autorole ") {
 		role := strings.Split(m.Content, prefix+"autorole ")[1]
@@ -115,43 +151,64 @@ func (bot *Object) MasterCommands(s *discordgo.Session, m *discordgo.MessageCrea
 			}
 		}
 	}
+}
 
-	// Set the greet message.
-	if strings.Contains(m.Content, prefix+"greet ") {
-		// Make sure the Object isn't empty.
-		if bot.System == nil {
-			fmt.Println("Database Error")
-			return
-		}
-		msg := strings.Split(m.Content, prefix+"greet ")[1]
-		// Set the Greet Message
-		bot.System.Greeting = msg
-		// Marshal (Pretty) for saving to a file.
-		js, err := json.MarshalIndent(bot, "", "  ")
-		if err != nil {
-			fmt.Println(err)
-			_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprint(err))
+// ChangeAvatar - Changes bot avatar
+// bot: Main Object with all your settings.
+// s: The Current Session between the bot and discord
+// m: The Message Object sent back from Discord.
+func (bot *Object) ChangeAvatar(s *discordgo.Session, m *discordgo.MessageCreate, prefix string) {
+
+	// Change Bot Avatar.
+	if strings.HasPrefix(m.Content, prefix+"avatar") {
+		var img []byte
+		if strings.Replace(m.Content, prefix+"avatar", "", -1) == "" {
+			img, err = ioutil.ReadFile("avatar.jpg")
 			if err != nil {
 				fmt.Println(err)
-			}
-			return
-		}
-		// Write entire database to file.
-		err = ioutil.WriteFile("config.json", js, 0777)
-		if err != nil {
-			fmt.Println(err)
-			_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprint(err))
-			if err != nil {
-				fmt.Println(err)
+				_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprint(err))
+				if err != nil {
+					fmt.Println(err)
+				}
+				return
 			}
 		} else {
-			_, err = s.ChannelMessageSend(m.ChannelID, "You have set the greeting to `"+msg+"`")
+			// Collect the avatar from a link.
+			url := strings.Replace(m.Content, prefix+"avatar ", "", -1)
+			img, err = GetPageContents(url)
+			if err != nil {
+				fmt.Println(err)
+				_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprint(err))
+				if err != nil {
+					fmt.Println(err)
+				}
+				return
+			}
+		}
+		base64 := base64.StdEncoding.EncodeToString(img)
+		avatar := fmt.Sprintf("data:image/png;base64,%s", string(base64))
+		_, err = s.UserUpdate("", "", s.State.User.Username, avatar, "")
+		if err != nil {
+			fmt.Println(err)
+			_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprint(err))
 			if err != nil {
 				fmt.Println(err)
 			}
+			return
+		}
+		_, err = s.ChannelMessageSend(m.ChannelID, "Successfully changed my avatar.")
+		if err != nil {
+			fmt.Println(err)
+			return
 		}
 	}
+}
 
+// AddARS - adds rule to your A.R.S.
+// bot: Main Object with all your settings.
+// s: The Current Session between the bot and discord
+// m: The Message Object sent back from Discord.
+func (bot *Object) AddARS(s *discordgo.Session, m *discordgo.MessageCreate, prefix string) {
 	// add auto to your autoresponse.
 	if strings.Contains(m.Content, prefix+"auto ") {
 		var ars map[string]string
@@ -205,7 +262,13 @@ func (bot *Object) MasterCommands(s *discordgo.Session, m *discordgo.MessageCrea
 			fmt.Println(err)
 		}
 	}
+}
 
+// DeleteARS - removes rule from your A.R.S.
+// bot: Main Object with all your settings.
+// s: The Current Session between the bot and discord
+// m: The Message Object sent back from Discord.
+func (bot *Object) DeleteARS(s *discordgo.Session, m *discordgo.MessageCreate, prefix string) {
 	// Command to delete a rule from the A.R.S - delauto triggername or delauto &triggername
 	if strings.HasPrefix(m.Content, prefix+"delauto ") {
 		trigger := strings.Replace(m.Content, prefix+"delauto ", "", -1)
@@ -241,50 +304,6 @@ func (bot *Object) MasterCommands(s *discordgo.Session, m *discordgo.MessageCrea
 					}
 				}
 			}
-		}
-	}
-
-	// Change Bot Avatar.
-	if strings.HasPrefix(m.Content, prefix+"avatar") {
-		var img []byte
-		if strings.Replace(m.Content, prefix+"avatar", "", -1) == "" {
-			img, err = ioutil.ReadFile("avatar.png")
-			if err != nil {
-				fmt.Println(err)
-				_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprint(err))
-				if err != nil {
-					fmt.Println(err)
-				}
-				return
-			}
-		} else {
-			// Collect the avatar from a link.
-			url := strings.Replace(m.Content, prefix+"avatar ", "", -1)
-			img, err = GetPageContents(url)
-			if err != nil {
-				fmt.Println(err)
-				_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprint(err))
-				if err != nil {
-					fmt.Println(err)
-				}
-				return
-			}
-		}
-		base64 := base64.StdEncoding.EncodeToString(img)
-		avatar := fmt.Sprintf("data:image/png;base64,%s", string(base64))
-		_, err = s.UserUpdate("", "", s.State.User.Username, avatar, "")
-		if err != nil {
-			fmt.Println(err)
-			_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprint(err))
-			if err != nil {
-				fmt.Println(err)
-			}
-			return
-		}
-		_, err = s.ChannelMessageSend(m.ChannelID, "Successfully changed my avatar.")
-		if err != nil {
-			fmt.Println(err)
-			return
 		}
 	}
 }

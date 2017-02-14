@@ -4,10 +4,25 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
 )
+
+// GetPageContents - Get page content based on URL.
+// url: Valid url of image.
+func GetPageContents(url string) ([]byte, error) {
+	req, err := http.NewRequest("GET", url, nil)
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	return body, err
+}
 
 // IsManager Check to see if a user has ManageServer Permissions.
 // s: The Current Session between the bot and discord
