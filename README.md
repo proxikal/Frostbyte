@@ -4,7 +4,7 @@ Comes with a few commands and a light weight A.R.S
   
 ## Config Frostbyte
 When you clone this branch you will see `config.json` with two entries.  
-`Token` -> Discord Bot Token
+`Token` -> Discord Bot Token  
 `Guild` -> Your Guild ID
   
 Once you setup and run Frostbyte for the first time to initate the databse  
