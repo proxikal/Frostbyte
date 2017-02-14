@@ -42,9 +42,12 @@ You will have the option to set AutoRole, Greeting, ByeMsg and even the channels
   
 **A.R.S Keys**
 ```
-{pm}    - Pms the user
-{user}  - Mentions the user
-{/user} - Says the users name.
+{pm}           - Pms the user
+{user}         - Mentions the user
+{/user}        - Says the users name.
+{chan}         - Mentions current channel
+{listroles}    - Lists all server roles.
+{topic}        - Shows current channel topic.
 ```
 More commands and keys coming soon!
   
