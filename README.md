@@ -19,6 +19,6 @@ Comes with a few commands and a light weight A.R.S
 More commands and keys coming soon!
   
 ## Want to contribute?
-> Make a pull request! If it passes I will merge!  
+> Make a pull request! If it **passes** I will merge!  
   
 
