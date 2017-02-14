@@ -9,20 +9,26 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
+// IsManager Check to see if a user has ManageServer Permissions.
+// s: The Current Session between the bot and discord
+// m: The Message Object sent back from Discord.
 func IsManager(s *discordgo.Session, GuildID string, AuthorID string) bool {
 	// Check the user permissions of the guild.
 	perms, err := s.State.UserChannelPermissions(AuthorID, GuildID)
 	if err == nil {
 		if (perms & discordgo.PermissionManageServer) > 0 {
 			return true
-		} else {
-			return false
 		}
 	} else {
 		return false
 	}
+	return false
 }
 
+// Save - Saves Database to config.json
+// bot: Main Object with all your settings.
+// s: The Current Session between the bot and discord
+// m: The Message Object sent back from Discord.
 func (bot *Object) Save() {
 	for {
 		<-time.After(5 * time.Minute)
@@ -46,6 +52,10 @@ func (bot *Object) PruneMessages() {
 }
 */
 
+// GetRoleID - Grabs the Discord Role ID
+// bot: Main Object with all your settings.
+// s: The Current Session between the bot and discord
+// role: The Discord role
 func (bot *Object) GetRoleID(s *discordgo.Session, role string) string {
 	var id string
 	r, err := s.State.Guild(bot.Guild)
@@ -59,6 +69,10 @@ func (bot *Object) GetRoleID(s *discordgo.Session, role string) string {
 	return id
 }
 
+// MemberHasRole - Checks to see if the user has a role.
+// bot: Main Object with all your settings.
+// s: The Current Session between the bot and discord
+// role: The Discord role
 func (bot *Object) MemberHasRole(s *discordgo.Session, AuthorID string, role string) bool {
 	therole := bot.GetRoleID(s, role)
 	z, err := s.State.Member(bot.Guild, AuthorID)
@@ -77,6 +91,10 @@ func (bot *Object) MemberHasRole(s *discordgo.Session, AuthorID string, role str
 	return false
 }
 
+// Register - Register new object.
+// bot: Main Object with all your settings.
+// s: The Current Session between the bot and discord
+// m: Message Object sent back from Discord.
 func (bot *Object) Register(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// check and make sure the server already exists in my collection.
 	if bot.System != nil {
@@ -107,6 +125,10 @@ func (bot *Object) Register(s *discordgo.Session, m *discordgo.MessageCreate) {
 	bot.System = info
 }
 
+// Task - Store new messages to object.
+// bot: Main Object with all your settings.
+// s: The Current Session between the bot and discord
+// role: The Discord role
 func (bot *Object) Task(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// Don't track the bots messages.
 	if m.Author.ID == s.State.User.ID {

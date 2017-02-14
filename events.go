@@ -7,7 +7,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-// GuildMemberAdd: DiscordGo Event for When someone joins your server.
+// GuildMemberAdd DiscordGo Event for When someone joins your server.
 // bot: Main Object with all your settings.
 // s: The Current Session between the bot and discord
 // m: The Member Object sent back from Discord.
@@ -17,7 +17,8 @@ func (bot *Object) GuildMemberAdd(s *discordgo.Session, m *discordgo.GuildMember
 		// Make sure the Autorole is not empty.
 		if bot.System.Autorole != "" {
 			// Default: Set the auto role channel to #general (Main Channel)
-			var autochan string = m.GuildID
+			var autochan string
+			autochan = m.GuildID
 			// Check if Autorole channel is empty.
 			if bot.System.Channels.Autorole != "" {
 				autochan = bot.System.Channels.Autorole
@@ -47,7 +48,8 @@ func (bot *Object) GuildMemberAdd(s *discordgo.Session, m *discordgo.GuildMember
 		// Check to see if greeting is not empty.
 		if bot.System.Greeting != "" {
 			// Default: Set the greet channel to #general (Main Channel)
-			var greetchan string = m.GuildID
+			var greetchan string
+			greetchan = m.GuildID
 			// Check for the {pm} key.
 			if strings.Contains(bot.System.Greeting, "{pm}") {
 				// Open a Private Channel with the user.
@@ -71,13 +73,14 @@ func (bot *Object) GuildMemberAdd(s *discordgo.Session, m *discordgo.GuildMember
 	}
 }
 
-// GuildMemberRemove: DiscordGo Event for when someone leaves your server.
+// GuildMemberRemove DiscordGo Event for when someone leaves your server.
 // bot: Main Object with all your settings.
 // s: The Current Session between the bot and discord
 // m: The Member Object sent back from Discord.
 func (bot *Object) GuildMemberRemove(s *discordgo.Session, m *discordgo.GuildMemberRemove) {
 	// Set Bye Message to #general (Main Channel)
-	var byechan string = m.GuildID
+	var byechan string
+	byechan = m.GuildID
 	// Make sure object is not nil.
 	if bot.System != nil {
 		// Make sure the Bye Message is not empty.
@@ -104,7 +107,7 @@ func (bot *Object) GuildMemberRemove(s *discordgo.Session, m *discordgo.GuildMem
 	}
 }
 
-// Initiate: Register (if new); store messages.
+// Initiate Register (if new); store messages.
 // bot: Main Object with all your settings.
 // s: The Current Session between the bot and discord
 // m: The Message Object sent back from Discord.
