@@ -373,6 +373,21 @@ func (bot *Object) Parse(s *discordgo.Session, m *discordgo.MessageCreate, trigg
 		response = strings.Replace(response, "{/user}", m.Author.Username, -1)
 	}
 
+	if strings.Contains(response, "{redirect:") {
+		ch := strings.Split(response, "{redirect:")[1]
+		ch = strings.Split(ch, "}")[0]
+		g, err := s.State.Guild(bot.Guild)
+		if err != nil {
+			fmt.Println(err)
+		}
+		for _, c := range g.Channels {
+			if c.ID == ch {
+				ChannelID = c.ID
+			}
+		}
+		response = strings.Replace(response, "{redirect:"+ch+"}", "", -1)
+	}
+
 	if strings.Contains(response, "{pm}") {
 		k, err := s.UserChannelCreate(m.Author.ID)
 		if err != nil {
