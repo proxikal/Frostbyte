@@ -3,6 +3,12 @@
 > Open Source Discord Bot written in Golang (DiscordGo library by bwmarrin)  
 Comes with a few commands and a light weight A.R.S  
   
+| Option | Information |
+|:--: | :--: |
+| [Discord Developers](https://discordapp.com/developers/applications/me) | Register a bot account with Discord! |
+| [Discord Go](https://github.com/bwmarrin/discordgo) | DiscordGo Library by: bwmarrin |
+| [Discord Go (Go Docs)](https://godoc.org/github.com/bwmarrin/discordgo) | Godocs collection for DiscordGo |
+  
 ## Config Frostbyte
 When you clone this branch you will see `config.json` with two entries.  
 `Token` -> Discord Bot Token  
