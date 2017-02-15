@@ -55,6 +55,7 @@ You will have the option to set AutoRole, Greeting, ByeMsg and even the channels
 {chan}         - Mentions current channel
 {listroles}    - Lists all server roles.
 {topic}        - Shows current channel topic.
+{redirect}     - {redirect:Channel-ID} Redirect msg to another channel.
 ```
 More commands and keys coming soon!
   
