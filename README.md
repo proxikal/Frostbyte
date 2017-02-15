@@ -45,6 +45,11 @@ You will have the option to set AutoRole, Greeting, ByeMsg and even the channels
 .delauto trigger
 .autorole role name
 .greet Greet Message
+.viewauto
+.inspect trigger
+.addstatus Message
+.delstatus Message
+.viewstatus
 ```
   
 **A.R.S Keys**
