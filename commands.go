@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -18,46 +19,100 @@ func (bot *Object) CommandHandler(s *discordgo.Session, m *discordgo.MessageCrea
 	if bot.System == nil {
 		return
 	}
-	var prefix string = bot.System.Prefix
+	var prefix = bot.System.Prefix
 
 	// Check user for Manage Server permission.
 	if IsManager(s, bot.Guild, m.Author.ID) == true {
 		// Redirect to Master Commands.
-		bot.MasterCommands(s, m)
+		bot.AddARS(s, m, prefix)
+		bot.DeleteARS(s, m, prefix)
+		bot.AutoRoleCommand(s, m, prefix)
+		bot.GreetCommand(s, m, prefix)
+		bot.ChangeAvatar(s, m, prefix)
 	}
 	// Execute Auto Response System.
+	bot.Listen(s, m, prefix)
+}
+
+// Listen - Listens for A.R.S Commands.
+// bot: Main Object with all your settings.
+// s: The Current Session between the bot and discord
+// m: The Message Object sent back from Discord.
+func (bot *Object) Listen(s *discordgo.Session, m *discordgo.MessageCreate, prefix string) {
 	if strings.Contains(m.Content, prefix+"auto ") == false && strings.Contains(m.Content, prefix+"delauto ") == false {
 		var ars map[string]string
-		if _, err := os.Stat("autoresponse.json"); err == nil {
-			io, err := ioutil.ReadFile("autoresponse.json")
-			if err == nil {
-				json.Unmarshal(io, &ars)
-				for t, r := range ars {
-					if strings.Contains(t, "&") {
-						// Using the Contains system.
-						if strings.Contains(m.Content, t) {
-							bot.Parse(s, m, t, r)
-						}
-					} else {
-						// Just a basic trigger.
-						if m.Content == t {
-							bot.Parse(s, m, t, r)
-						}
-					}
+		if _, err := os.Stat("autoresponse.json"); err != nil {
+			return
+		}
+		io, err := ioutil.ReadFile("autoresponse.json")
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		json.Unmarshal(io, &ars)
+		for t, r := range ars {
+			if strings.Contains(t, "&") {
+				// Using the Contains system.
+				if strings.Contains(m.Content, t) {
+					bot.Parse(s, m, t, r)
+				}
+			} else {
+				// Just a basic trigger.
+				if m.Content == t {
+					bot.Parse(s, m, t, r)
 				}
 			}
 		}
 	}
 }
 
-// MasterCommands - Commands Available to people with Manage Server Permissions.
+// GreetCommand - greet new people with a message.
 // bot: Main Object with all your settings.
 // s: The Current Session between the bot and discord
 // m: The Message Object sent back from Discord.
-func (bot *Object) MasterCommands(s *discordgo.Session, m *discordgo.MessageCreate) {
-	// Set the Prefix variable.
-	var prefix string = bot.System.Prefix
+func (bot *Object) GreetCommand(s *discordgo.Session, m *discordgo.MessageCreate, prefix string) {
+	// Set the greet message.
+	if strings.Contains(m.Content, prefix+"greet ") {
+		// Make sure the Object isn't empty.
+		if bot.System == nil {
+			fmt.Println("Database Error")
+			return
+		}
+		msg := strings.Split(m.Content, prefix+"greet ")[1]
+		// Set the Greet Message
+		bot.System.Greeting = msg
+		// Marshal (Pretty) for saving to a file.
+		js, err := json.MarshalIndent(bot, "", "  ")
+		if err != nil {
+			fmt.Println(err)
+			_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprint(err))
+			if err != nil {
+				fmt.Println(err)
+			}
+			return
+		}
+		// Write entire database to file.
+		err = ioutil.WriteFile("config.json", js, 0777)
+		if err != nil {
+			fmt.Println(err)
+			_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprint(err))
+			if err != nil {
+				fmt.Println(err)
+			}
+		} else {
+			_, err = s.ChannelMessageSend(m.ChannelID, "You have set the greeting to `"+msg+"`")
+			if err != nil {
+				fmt.Println(err)
+			}
+		}
+	}
+}
 
+// AutoRoleCommand - give new people roles.
+// bot: Main Object with all your settings.
+// s: The Current Session between the bot and discord
+// m: The Message Object sent back from Discord.
+func (bot *Object) AutoRoleCommand(s *discordgo.Session, m *discordgo.MessageCreate, prefix string) {
 	// Set the autorole command.
 	if strings.Contains(m.Content, prefix+"autorole ") {
 		role := strings.Split(m.Content, prefix+"autorole ")[1]
@@ -82,6 +137,10 @@ func (bot *Object) MasterCommands(s *discordgo.Session, m *discordgo.MessageCrea
 				err = ioutil.WriteFile("config.json", js, 0777)
 				if err != nil {
 					fmt.Println(err)
+					_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprint(err))
+					if err != nil {
+						fmt.Println(err)
+					}
 				}
 				_, err = s.ChannelMessageSend(m.ChannelID, "You have set the auto role to `"+role+"`")
 				if err != nil {
@@ -92,35 +151,64 @@ func (bot *Object) MasterCommands(s *discordgo.Session, m *discordgo.MessageCrea
 			}
 		}
 	}
+}
 
-	// Set the greet message.
-	if strings.Contains(m.Content, prefix+"greet ") {
-		// Make sure the Object isn't empty.
-		if bot.System == nil {
-			fmt.Println("Database Error")
-			return
-		}
-		msg := strings.Split(m.Content, prefix+"greet ")[1]
-		// Set the Greet Message
-		bot.System.Greeting = msg
-		// Marshal (Pretty) for saving to a file.
-		js, err := json.MarshalIndent(bot, "", "  ")
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		// Write entire database to file.
-		err = ioutil.WriteFile("config.json", js, 0777)
-		if err != nil {
-			fmt.Println(err)
+// ChangeAvatar - Changes bot avatar
+// bot: Main Object with all your settings.
+// s: The Current Session between the bot and discord
+// m: The Message Object sent back from Discord.
+func (bot *Object) ChangeAvatar(s *discordgo.Session, m *discordgo.MessageCreate, prefix string) {
+
+	// Change Bot Avatar.
+	if strings.HasPrefix(m.Content, prefix+"avatar") {
+		var img []byte
+		if strings.Replace(m.Content, prefix+"avatar", "", -1) == "" {
+			img, err = ioutil.ReadFile("avatar.jpg")
+			if err != nil {
+				fmt.Println(err)
+				_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprint(err))
+				if err != nil {
+					fmt.Println(err)
+				}
+				return
+			}
 		} else {
-			_, err = s.ChannelMessageSend(m.ChannelID, "You have set the greeting to `"+msg+"`")
+			// Collect the avatar from a link.
+			url := strings.Replace(m.Content, prefix+"avatar ", "", -1)
+			img, err = GetPageContents(url)
+			if err != nil {
+				fmt.Println(err)
+				_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprint(err))
+				if err != nil {
+					fmt.Println(err)
+				}
+				return
+			}
+		}
+		base64 := base64.StdEncoding.EncodeToString(img)
+		avatar := fmt.Sprintf("data:image/png;base64,%s", string(base64))
+		_, err = s.UserUpdate("", "", s.State.User.Username, avatar, "")
+		if err != nil {
+			fmt.Println(err)
+			_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprint(err))
 			if err != nil {
 				fmt.Println(err)
 			}
+			return
+		}
+		_, err = s.ChannelMessageSend(m.ChannelID, "Successfully changed my avatar.")
+		if err != nil {
+			fmt.Println(err)
+			return
 		}
 	}
+}
 
+// AddARS - adds rule to your A.R.S.
+// bot: Main Object with all your settings.
+// s: The Current Session between the bot and discord
+// m: The Message Object sent back from Discord.
+func (bot *Object) AddARS(s *discordgo.Session, m *discordgo.MessageCreate, prefix string) {
 	// add auto to your autoresponse.
 	if strings.Contains(m.Content, prefix+"auto ") {
 		var ars map[string]string
@@ -133,12 +221,20 @@ func (bot *Object) MasterCommands(s *discordgo.Session, m *discordgo.MessageCrea
 			err = ioutil.WriteFile("autoresponse.json", []byte("{}"), 0777)
 			if err != nil {
 				fmt.Println(err)
+				_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprint(err))
+				if err != nil {
+					fmt.Println(err)
+				}
 				return
 			}
 		}
 		io, err := ioutil.ReadFile("autoresponse.json")
 		if err != nil {
 			fmt.Println(err)
+			_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprint(err))
+			if err != nil {
+				fmt.Println(err)
+			}
 			return
 		}
 		json.Unmarshal(io, &ars)
@@ -146,11 +242,19 @@ func (bot *Object) MasterCommands(s *discordgo.Session, m *discordgo.MessageCrea
 		eo, err := json.MarshalIndent(ars, "", "  ")
 		if err != nil {
 			fmt.Println(err)
+			_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprint(err))
+			if err != nil {
+				fmt.Println(err)
+			}
 			return
 		}
 		err = ioutil.WriteFile("autoresponse.json", eo, 0777)
 		if err != nil {
 			fmt.Println(err)
+			_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprint(err))
+			if err != nil {
+				fmt.Println(err)
+			}
 			return
 		}
 		_, err = s.ChannelMessageSend(m.ChannelID, "Added `"+trigger+"` with the response:\n```"+response+"```")
@@ -158,7 +262,14 @@ func (bot *Object) MasterCommands(s *discordgo.Session, m *discordgo.MessageCrea
 			fmt.Println(err)
 		}
 	}
+}
 
+// DeleteARS - removes rule from your A.R.S.
+// bot: Main Object with all your settings.
+// s: The Current Session between the bot and discord
+// m: The Message Object sent back from Discord.
+func (bot *Object) DeleteARS(s *discordgo.Session, m *discordgo.MessageCreate, prefix string) {
+	// Command to delete a rule from the A.R.S - delauto triggername or delauto &triggername
 	if strings.HasPrefix(m.Content, prefix+"delauto ") {
 		trigger := strings.Replace(m.Content, prefix+"delauto ", "", -1)
 		if trigger != "" {
@@ -166,6 +277,10 @@ func (bot *Object) MasterCommands(s *discordgo.Session, m *discordgo.MessageCrea
 			io, err := ioutil.ReadFile("autoresponse.json")
 			if err != nil {
 				fmt.Println(err)
+				_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprint(err))
+				if err != nil {
+					fmt.Println(err)
+				}
 				return
 			}
 			json.Unmarshal(io, &ars)
@@ -174,11 +289,19 @@ func (bot *Object) MasterCommands(s *discordgo.Session, m *discordgo.MessageCrea
 				js, err := json.MarshalIndent(ars, "", "  ")
 				if err != nil {
 					fmt.Println(err)
+					_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprint(err))
+					if err != nil {
+						fmt.Println(err)
+					}
 					return
 				}
 				err = ioutil.WriteFile("autoresponse.json", js, 0777)
 				if err != nil {
 					fmt.Println(err)
+					_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprint(err))
+					if err != nil {
+						fmt.Println(err)
+					}
 				}
 			}
 		}
