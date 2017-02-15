@@ -2,13 +2,23 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
 )
+
+// Random - Picks a random integer.
+// min: Minumum amount in the integer
+// max: Maximum amount in the integer
+func Random(min, max int) int {
+	rand.Seed(time.Now().Unix())
+	return rand.Intn(max-min) + min
+}
 
 // GetPageContents - Get page content based on URL.
 // url: Valid url of image.
@@ -162,4 +172,76 @@ func (bot *Object) Task(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 	// Add this Message to our Info object.
 	bot.System.Messages = append(bot.System.Messages, msg)
+}
+
+// AddStatus - Adds a status string to the main Object.
+// message: the status message(s)
+func (bot *Object) AddStatus(message string) error {
+	if bot.System == nil {
+		return nil
+	}
+	for _, s := range bot.System.Status {
+		if s == message {
+			return errors.New("status exists already")
+		}
+	}
+	bot.System.Status = append(bot.System.Status, message)
+	return nil
+}
+
+// RemoveStatus - Removes a status string from the main Object.
+// message: the status message
+func (bot *Object) RemoveStatus(message string) error {
+	if bot.System == nil {
+		return errors.New("object doesn't exist")
+	}
+	var ti int
+	for i, k := range bot.System.Status {
+		if k == message {
+			ti = i
+		}
+	}
+	if ti == 0 {
+		return errors.New("status doesn't exist in my collection")
+	}
+	bot.System.Status = append(bot.System.Status[:ti], bot.System.Status[ti+1:]...)
+	return nil
+}
+
+// Intro - Displays introduction and information on startup.
+func (bot *Object) Intro(s *discordgo.Session) {
+	var ars map[string]string
+	fmt.Println(`
+  ______             _   _           _       
+ |  ____|           | | | |         | |      
+ | |__ _ __ ___  ___| |_| |__  _   _| |_ ___ 
+ |  __| '__/ _ \/ __| __| '_ \| | | | __/ _ \
+ | |  | | | (_) \__ \ |_| |_) | |_| | ||  __/
+ |_|  |_|  \___/|___/\__|_.__/ \__, |\__\___|
+                                __/ |        
+                               |___/         `)
+	<-time.After(2 * time.Second)
+	// Collect some information and display it!
+	guild, err := s.State.Guild(bot.Guild)
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		// Channel count for server
+		fmt.Print(len(guild.Channels), " Channel(s), ")
+		// Member count for server
+		fmt.Print(len(guild.Members), " Member(s), ")
+		// Role count for server
+		fmt.Print(len(guild.Roles), " Role(s), ")
+	}
+
+	// Collect the A.R.S Count.
+	io, err := ioutil.ReadFile("autoresponse.json")
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		json.Unmarshal(io, &ars)
+		// ARS Count for the bot
+		fmt.Println(len(ars), " A.R.S Rule(s).")
+	}
+	fmt.Println(`---------------------------------------------`)
 }

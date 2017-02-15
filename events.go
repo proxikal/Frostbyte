@@ -107,7 +107,7 @@ func (bot *Object) GuildMemberRemove(s *discordgo.Session, m *discordgo.GuildMem
 	}
 }
 
-// Initiate Register (if new); store messages.
+// Initiate Register (if new); otherwise store messages.
 // bot: Main Object with all your settings.
 // s: The Current Session between the bot and discord
 // m: The Message Object sent back from Discord.
@@ -117,5 +117,4 @@ func (bot *Object) Initiate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	} else {
 		bot.Task(s, m)
 	}
-	fmt.Println(m.Author.ID, m.Content)
 }
