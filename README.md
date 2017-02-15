@@ -1,5 +1,5 @@
 ![Frostbyte](https://xtclabs.net/img/byte-logo.png)  
-![Build Status](https://api.travis-ci.org/proxikal/Frostbyte.svg?branch=master) [![Go Report Card](https://goreportcard.com/badge/github.com/proxikal/Frostbyte)](https://goreportcard.com/report/github.com/proxikal/Frostbyte) [![Discord Server](https://img.shields.io/badge/discord-xTech%20Labs-blue.svg)](https://discord.gg/9PRs6xH)
+![Build Status](https://api.travis-ci.org/proxikal/Frostbyte.svg?branch=master) [![Go Report Card](https://goreportcard.com/badge/github.com/proxikal/Frostbyte)](https://goreportcard.com/report/github.com/proxikal/Frostbyte) [![Discord Server](https://img.shields.io/badge/discord-xTech%20Labs-blue.svg)](https://discord.gg/9PRs6xH) [![Invite Echo](https://img.shields.io/badge/invite-Echo%202.0-red.svg)](https://discordapp.com/oauth2/authorize?permissions=0&scope=bot&client_id=249891250117804032) [![Discord Gophers](https://img.shields.io/badge/discord-Gophers-orange.svg)](https://discord.gg/0f1SbxBZjYoCtNPP)
 > Open Source Discord Bot written in Golang (DiscordGo library by bwmarrin)  
 Comes with a few commands and a light weight A.R.S  
   
