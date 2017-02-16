@@ -66,16 +66,17 @@ func (bot *Object) CommandHandler(s *discordgo.Session, m *discordgo.MessageCrea
 
 	// Check user for Manage Server permission.
 	if IsManager(s, bot.Guild, m.Author.ID) == true {
-		// Redirect to Master Commands.
-		bot.AddARS(s, m, prefix)
-		bot.DeleteARS(s, m, prefix)
-		bot.AutoRoleCommand(s, m, prefix)
-		bot.GreetCommand(s, m, prefix)
-		bot.ChangeAvatar(s, m, prefix)
-		bot.InfoCommand(s, m, prefix)
-		bot.ViewARS(s, m, prefix)
-		bot.InspectARS(s, m, prefix)
-		bot.StatusCommands(s, m, prefix)
+		bot.AddARS(s, m, prefix)            // Listen for .auto command
+		bot.DeleteARS(s, m, prefix)         // Listen for .delauto command
+		bot.AutoRoleCommand(s, m, prefix)   // listen for .autorole command
+		bot.GreetCommand(s, m, prefix)      // Listen for .greet command
+		bot.ChangeAvatar(s, m, prefix)      // Listen for .avatar command
+		bot.InfoCommand(s, m, prefix)       // Listen for .info command
+		bot.ViewARS(s, m, prefix)           // Listen for .viewauto command
+		bot.InspectARS(s, m, prefix)        // Listen for .inspect command
+		bot.AddStatusCommand(s, m, prefix)  // Listen for .addstatus command
+		bot.DelStatusCommand(s, m, prefix)  // Listen for .delstatus command
+		bot.ViewStatusCommand(s, m, prefix) // Listen for .viewstatus command
 	}
 	// Execute Auto Response System.
 	if m.Author.ID != s.State.User.ID && m.Author.Bot == false {
