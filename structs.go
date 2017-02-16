@@ -16,6 +16,7 @@ type Object struct {
 // Greeting: The welcome message
 // Channels: Collection of Channels (Default is #general)
 // Messages: Collection of messages.
+// Status: Collection of the status messages & interval.
 type System struct {
 	Prefix   string
 	Autorole string
@@ -23,6 +24,7 @@ type System struct {
 	ByeMsg   string
 	Channels *Channels
 	Messages []*Messages
+	Status   []string
 }
 
 // Channels - The channels storage for preferences

@@ -6,61 +6,71 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 )
 
-// CommandHandler - Handle the commands and Auto Response System
-// bot: Main Object with all your settings.
-// s: The Current Session between the bot and discord
-// m: The Message Object sent back from Discord.
-func (bot *Object) CommandHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
-	if bot.System == nil {
-		return
-	}
-	var prefix = bot.System.Prefix
-
-	// Check user for Manage Server permission.
-	if IsManager(s, bot.Guild, m.Author.ID) == true {
-		// Redirect to Master Commands.
-		bot.AddARS(s, m, prefix)
-		bot.DeleteARS(s, m, prefix)
-		bot.AutoRoleCommand(s, m, prefix)
-		bot.GreetCommand(s, m, prefix)
-		bot.ChangeAvatar(s, m, prefix)
-	}
-	// Execute Auto Response System.
-	bot.Listen(s, m, prefix)
-}
-
-// Listen - Listens for A.R.S Commands.
-// bot: Main Object with all your settings.
-// s: The Current Session between the bot and discord
-// m: The Message Object sent back from Discord.
-func (bot *Object) Listen(s *discordgo.Session, m *discordgo.MessageCreate, prefix string) {
-	if strings.Contains(m.Content, prefix+"auto ") == false && strings.Contains(m.Content, prefix+"delauto ") == false {
-		var ars map[string]string
-		if _, err := os.Stat("autoresponse.json"); err != nil {
-			return
+// StatusCommands - allows you to add new status messages in discord.
+func (bot *Object) StatusCommands(s *discordgo.Session, m *discordgo.MessageCreate, prefix string) {
+	if strings.Contains(m.Content, prefix+"addstatus ") {
+		status := strings.Replace(m.Content, prefix+"addstatus ", "", -1)
+		err = bot.AddStatus(status)
+		if err == nil {
+			js, err := json.MarshalIndent(bot, "", "  ")
+			if err != nil {
+				fmt.Println(err)
+			} else {
+				ioutil.WriteFile("config.json", js, 0777)
+				_, err = s.ChannelMessageSend(m.ChannelID, "Status has been added to collection.")
+				if err != nil {
+					fmt.Println(err)
+				}
+			}
+		} else {
+			_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprint(err))
+			if err != nil {
+				fmt.Println(err)
+			}
 		}
-		io, err := ioutil.ReadFile("autoresponse.json")
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		json.Unmarshal(io, &ars)
-		for t, r := range ars {
-			if strings.Contains(t, "&") {
-				// Using the Contains system.
-				if strings.Contains(m.Content, t) {
-					bot.Parse(s, m, t, r)
+	}
+	if strings.Contains(m.Content, prefix+"delstatus ") {
+		status := strings.Replace(m.Content, prefix+"delstatus ", "", -1)
+		err = bot.RemoveStatus(status)
+		if err == nil {
+			js, err := json.MarshalIndent(bot, "", "  ")
+			if err == nil {
+				ioutil.WriteFile("config.json", js, 0777)
+				_, err = s.ChannelMessageSend(m.ChannelID, "Status has been removed from collection.")
+				if err != nil {
+					fmt.Println(err)
 				}
 			} else {
-				// Just a basic trigger.
-				if m.Content == t {
-					bot.Parse(s, m, t, r)
-				}
+				fmt.Println(err)
+			}
+		} else {
+			_, err = s.ChannelMessageSend(m.ChannelID, fmt.Sprint(err))
+			if err != nil {
+				fmt.Println(err)
+			}
+		}
+	}
+	if m.Content == prefix+"viewstatus" {
+		var glob string
+		for _, st := range bot.System.Status {
+			glob = glob + st + "\n"
+		}
+		if glob == "" {
+			_, err = s.ChannelMessageSend(m.ChannelID, "You don't have any status messages set.")
+			if err != nil {
+				fmt.Println(Err)
+			}
+		} else {
+			_, err = s.ChannelMessageSend(m.ChannelID, "```"+glob+"```")
+			if err != nil {
+				fmt.Println(Err)
 			}
 		}
 	}
@@ -302,103 +312,164 @@ func (bot *Object) DeleteARS(s *discordgo.Session, m *discordgo.MessageCreate, p
 					if err != nil {
 						fmt.Println(err)
 					}
+					return
+				}
+				s.ChannelMessageSend(m.ChannelID, "I've removed the rule `"+trigger+"` from your A.R.S")
+			} else {
+				s.ChannelMessageSend(m.ChannelID, "The trigger doesn't exist in your A.R.S Rules.")
+			}
+		}
+	}
+}
+
+// InfoCommand - Displays an Embed with some information.
+// bot: Main Object with all your settings.
+// s: The Current Session between the bot and discord
+// m: The Message Object sent back from Discord.
+func (bot *Object) InfoCommand(s *discordgo.Session, m *discordgo.MessageCreate, prefix string) {
+	if m.Content == prefix+"info" {
+		t := time.Unix(0, start)
+		elapsed := time.Since(t)
+		upt := fmt.Sprintf("%s", elapsed)
+		upti := strings.Split(upt, ".")
+		uptime := upti[0]
+		stats, err := s.State.Guild(bot.Guild)
+		if err != nil {
+			fmt.Println(err)
+			s.ChannelMessageSend(m.ChannelID, fmt.Sprint(err))
+		}
+		channelcount := strconv.Itoa(len(stats.Channels))
+		membercount := strconv.Itoa(len(stats.Members))
+		rolecount := strconv.Itoa(len(stats.Roles))
+		var dgo []*discordgo.MessageEmbedField
+		field1 := &discordgo.MessageEmbedField{
+			Name:   "Current Members",
+			Value:  membercount,
+			Inline: true,
+		}
+		field2 := &discordgo.MessageEmbedField{
+			Name:   "Channel Count",
+			Value:  channelcount,
+			Inline: true,
+		}
+		field3 := &discordgo.MessageEmbedField{
+			Name:   "Role Count",
+			Value:  rolecount,
+			Inline: true,
+		}
+		field4 := &discordgo.MessageEmbedField{
+			Name:   "Uptime",
+			Value:  uptime + "s",
+			Inline: true,
+		}
+		field5 := &discordgo.MessageEmbedField{
+			Name:   "Github",
+			Value:  "[Open Source](https://github.com/proxikal/Frostbyte)",
+			Inline: true,
+		}
+
+		dgo = append(dgo, field1)
+		dgo = append(dgo, field2)
+		dgo = append(dgo, field3)
+		dgo = append(dgo, field4)
+		dgo = append(dgo, field5)
+		co1 := strings.TrimSpace("4286f4")
+		color, _ := strconv.ParseInt(co1, 16, 0)
+		obj := &discordgo.MessageEmbed{
+			URL:         "https://discord.gg/9PRs6xH",
+			Type:        "rich",
+			Title:       "Frostbyte v0.0.1 (Silver)",
+			Description: "",
+			Color:       int(color),
+			Footer: &discordgo.MessageEmbedFooter{
+				Text:    "Need more help? Join our Server!",
+				IconURL: "https://xtclabs.net/img/byte-icon.png",
+			},
+			Thumbnail: &discordgo.MessageEmbedThumbnail{
+				URL: "https://xtclabs.net/img/byte-icon.png",
+			},
+			Fields: dgo,
+		}
+		_, err = s.ChannelMessageSendEmbed(m.ChannelID, obj)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+	}
+}
+
+// ViewARS - Displays an Embed with some information.
+// bot: Main Object with all your settings.
+// s: The Current Session between the bot and discord
+// m: The Message Object sent back from Discord.
+func (bot *Object) ViewARS(s *discordgo.Session, m *discordgo.MessageCreate, prefix string) {
+	if m.Content == prefix+"viewauto" {
+		var ars map[string]string
+		io, err := ioutil.ReadFile("autoresponse.json")
+		if err != nil {
+			fmt.Println(err)
+			s.ChannelMessageSend(m.ChannelID, fmt.Sprint(err))
+		} else {
+			err = json.Unmarshal(io, &ars)
+			if err != nil {
+				fmt.Println(err)
+				s.ChannelMessageSend(m.ChannelID, fmt.Sprint(err))
+			}
+			var glob string
+			for t := range ars {
+				glob = glob + "Trigger: " + t + "\n"
+			}
+			if len(glob) < 1999 {
+				_, err = s.ChannelMessageSend(m.ChannelID, "```ruby\n"+glob+"```")
+				if err != nil {
+					fmt.Println(err)
+				}
+			} else {
+				_, err = s.ChannelMessageSend(m.ChannelID, "A.R.S Exceeds 2000 characters (discords message limit) You will need to manually view your A.R.S")
+				if err != nil {
+					fmt.Println(err)
 				}
 			}
 		}
 	}
 }
 
-// Parse - Auto Response Keys into Data and than send Response (if any)
+// InspectARS - Displays an Embed with some information.
 // bot: Main Object with all your settings.
 // s: The Current Session between the bot and discord
 // m: The Message Object sent back from Discord.
-// Auto Response System is Licensed by the MIT and used by many other bots on Discord.
-// Originally attempted with Paradox Bot (4/11/2016)
-// Pefected with Echo 2.0!
-func (bot *Object) Parse(s *discordgo.Session, m *discordgo.MessageCreate, trigger, response string) {
-	var ChannelID string
-	ChannelID = m.ChannelID
-	// The bot cannot trigger the A.R.S (Would be really bad)
-	if m.Author.ID == s.State.User.ID {
-		return
-	}
+func (bot *Object) InspectARS(s *discordgo.Session, m *discordgo.MessageCreate, prefix string) {
+	if strings.HasPrefix(m.Content, prefix+"inspect ") {
+		var ars map[string]string
+		trigger := strings.Replace(m.Content, prefix+"inspect ", "", -1)
 
-	// If the user is a bot than we're going to ignore it.
-	if m.Author.Bot == true {
-		return
-	}
-
-	// Show channel name (with mention) #general, #lobby etc..
-	if strings.Contains(response, "{chan}") {
-		response = strings.Replace(response, "{chan}", "<#"+m.ChannelID+">", -1)
-	}
-
-	// Show channel topic.
-	if strings.Contains(response, "{topic}") {
-		ch, err := s.State.Channel(m.ChannelID)
+		io, err := ioutil.ReadFile("autoresponse.json")
 		if err != nil {
 			fmt.Println(err)
-			return
-		}
-		response = strings.Replace(response, "{topic}", ch.Topic, -1)
-	}
-
-	// List all the roles in a guild.
-	if strings.Contains(response, "{listroles}") {
-		var glob string
-		g, err := s.State.Guild(bot.Guild)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		if g.Roles != nil {
-			for _, r := range g.Roles {
-				glob = glob + r.Name + "\n"
-			}
-			if glob != "" {
-				response = strings.Replace(response, "{listroles}", glob, -1)
-			} else {
-				response = strings.Replace(response, "{listroles}", "[Empty]", -1)
-			}
+			s.ChannelMessageSend(m.ChannelID, fmt.Sprint(err))
 		} else {
-			response = strings.Replace(response, "{listroles}", "[Empty]", -1)
-		}
-	}
-
-	if strings.Contains(response, "{user}") {
-		response = strings.Replace(response, "{user}", "<@"+m.Author.ID+">", -1)
-	}
-
-	if strings.Contains(response, "{/user}") {
-		response = strings.Replace(response, "{/user}", m.Author.Username, -1)
-	}
-
-	if strings.Contains(response, "{redirect:") {
-		ch := strings.Split(response, "{redirect:")[1]
-		ch = strings.Split(ch, "}")[0]
-		g, err := s.State.Guild(bot.Guild)
-		if err != nil {
-			fmt.Println(err)
-		}
-		for _, c := range g.Channels {
-			if c.ID == ch {
-				ChannelID = c.ID
+			err = json.Unmarshal(io, &ars)
+			if err != nil {
+				fmt.Println(err)
+				s.ChannelMessageSend(m.ChannelID, fmt.Sprint(err))
+			}
+			var glob string
+			for t, r := range ars {
+				if t == trigger {
+					glob = r
+				}
+			}
+			if len(glob) < 1999 {
+				_, err = s.ChannelMessageSend(m.ChannelID, "Response for `"+trigger+"` ```ruby\n"+glob+"```")
+				if err != nil {
+					fmt.Println(err)
+				}
+			} else {
+				_, err = s.ChannelMessageSend(m.ChannelID, "A.R.S Exceeds 2000 characters (discords message limit) You will need to manually view your A.R.S")
+				if err != nil {
+					fmt.Println(err)
+				}
 			}
 		}
-		response = strings.Replace(response, "{redirect:"+ch+"}", "", -1)
-	}
-
-	if strings.Contains(response, "{pm}") {
-		k, err := s.UserChannelCreate(m.Author.ID)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		ChannelID = k.ID
-	}
-
-	_, err := s.ChannelMessageSend(ChannelID, response)
-	if err != nil {
-		fmt.Println(err)
 	}
 }
