@@ -13,7 +13,7 @@ import (
 )
 
 // Random - Picks a random integer.
-// min: Minumum amount in the integer
+// min: Minimum amount in the integer
 // max: Maximum amount in the integer
 func Random(min, max int) int {
 	rand.Seed(time.Now().Unix())
