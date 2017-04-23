@@ -134,7 +134,7 @@ func (bot *Object) StatusHandler(s *discordgo.Session, duration string) {
 	for {
 		if bot.System != nil {
 			r := 0
-			if len(bot.System.Status) > 1 {
+			if len(bot.System.Status) > 0 {
 				r = Random(1, len(bot.System.Status))
 			}
 			data := bot.System.Status[r]

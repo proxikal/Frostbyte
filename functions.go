@@ -17,7 +17,12 @@ import (
 // max: Maximum amount in the integer
 func Random(min, max int) int {
 	rand.Seed(time.Now().Unix())
-	return rand.Intn(max-min) + min
+	switch min {
+	case max:
+		return min
+	default:
+		return rand.Intn(max-min) + min
+	}
 }
 
 // GetPageContents - Get page content based on URL.
