@@ -16,12 +16,12 @@ import (
 // min: Minimum amount in the integer
 // max: Maximum amount in the integer
 func Random(min, max int) int {
-	rand.Seed(time.Now().Unix())
 	switch min {
 	case max:
 		return min
 	default:
-		return rand.Intn(max-min) + min
+		rand.Seed(time.Now().Unix())
+		return rand.Intn(max - min)
 	}
 }
 
