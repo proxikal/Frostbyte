@@ -8,9 +8,6 @@ import (
 )
 
 // ParseServer - Auto Response Parse Server keys
-// bot: Main Object with all your settings.
-// s: The Current Session between the bot and discord
-// m: The Message Object sent back from Discord.
 func (bot *Object) ParseServer(s *discordgo.Session, m *discordgo.MessageCreate, trigger, response string) string {
 	// Show channel name (with mention) #general, #lobby etc..
 	if strings.Contains(response, "{chan}") {
@@ -59,12 +56,6 @@ func (bot *Object) ParseServer(s *discordgo.Session, m *discordgo.MessageCreate,
 }
 
 // ParseDirection - Auto Response Parse direction (Last Stage) (pm, redirect or basic channel)
-// bot: Main Object with all your settings.
-// s: The Current Session between the bot and discord
-// m: The Message Object sent back from Discord.
-// Auto Response System is Licensed by the MIT and used by many other bots on Discord.
-// Originally attempted with Paradox Bot (4/11/2016)
-// Pefected with Echo 2.0!
 func (bot *Object) ParseDirection(s *discordgo.Session, m *discordgo.MessageCreate, trigger, response string) {
 	var ChannelID string
 	ChannelID = m.ChannelID

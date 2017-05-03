@@ -13,8 +13,8 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-// StatusCommands - allows you to add new status messages in discord.
-func (bot *Object) StatusCommands(s *discordgo.Session, m *discordgo.MessageCreate, prefix string) {
+// AddStatusCommand - Adds a status messages to Frostbyte.
+func (bot *Object) AddStatusCommand(s *discordgo.Session, m *discordgo.MessageCreate, prefix string) {
 	if strings.Contains(m.Content, prefix+"addstatus ") {
 		status := strings.Replace(m.Content, prefix+"addstatus ", "", -1)
 		err = bot.AddStatus(status)
@@ -36,6 +36,10 @@ func (bot *Object) StatusCommands(s *discordgo.Session, m *discordgo.MessageCrea
 			}
 		}
 	}
+}
+
+// DelStatusCommand - allows you to delete existing status messages in frostbyte.
+func (bot *Object) DelStatusCommand(s *discordgo.Session, m *discordgo.MessageCreate, prefix string) {
 	if strings.Contains(m.Content, prefix+"delstatus ") {
 		status := strings.Replace(m.Content, prefix+"delstatus ", "", -1)
 		err = bot.RemoveStatus(status)
@@ -57,6 +61,10 @@ func (bot *Object) StatusCommands(s *discordgo.Session, m *discordgo.MessageCrea
 			}
 		}
 	}
+}
+
+// ViewStatusCommand - Views the existing status messages.
+func (bot *Object) ViewStatusCommand(s *discordgo.Session, m *discordgo.MessageCreate, prefix string) {
 	if m.Content == prefix+"viewstatus" {
 		var glob string
 		for _, st := range bot.System.Status {
@@ -65,21 +73,18 @@ func (bot *Object) StatusCommands(s *discordgo.Session, m *discordgo.MessageCrea
 		if glob == "" {
 			_, err = s.ChannelMessageSend(m.ChannelID, "You don't have any status messages set.")
 			if err != nil {
-				fmt.Println(Err)
+				fmt.Println(err)
 			}
 		} else {
 			_, err = s.ChannelMessageSend(m.ChannelID, "```"+glob+"```")
 			if err != nil {
-				fmt.Println(Err)
+				fmt.Println(err)
 			}
 		}
 	}
 }
 
 // GreetCommand - greet new people with a message.
-// bot: Main Object with all your settings.
-// s: The Current Session between the bot and discord
-// m: The Message Object sent back from Discord.
 func (bot *Object) GreetCommand(s *discordgo.Session, m *discordgo.MessageCreate, prefix string) {
 	// Set the greet message.
 	if strings.Contains(m.Content, prefix+"greet ") {
@@ -119,9 +124,6 @@ func (bot *Object) GreetCommand(s *discordgo.Session, m *discordgo.MessageCreate
 }
 
 // AutoRoleCommand - give new people roles.
-// bot: Main Object with all your settings.
-// s: The Current Session between the bot and discord
-// m: The Message Object sent back from Discord.
 func (bot *Object) AutoRoleCommand(s *discordgo.Session, m *discordgo.MessageCreate, prefix string) {
 	// Set the autorole command.
 	if strings.Contains(m.Content, prefix+"autorole ") {
@@ -164,9 +166,6 @@ func (bot *Object) AutoRoleCommand(s *discordgo.Session, m *discordgo.MessageCre
 }
 
 // ChangeAvatar - Changes bot avatar
-// bot: Main Object with all your settings.
-// s: The Current Session between the bot and discord
-// m: The Message Object sent back from Discord.
 func (bot *Object) ChangeAvatar(s *discordgo.Session, m *discordgo.MessageCreate, prefix string) {
 
 	// Change Bot Avatar.
@@ -215,9 +214,6 @@ func (bot *Object) ChangeAvatar(s *discordgo.Session, m *discordgo.MessageCreate
 }
 
 // AddARS - adds rule to your A.R.S.
-// bot: Main Object with all your settings.
-// s: The Current Session between the bot and discord
-// m: The Message Object sent back from Discord.
 func (bot *Object) AddARS(s *discordgo.Session, m *discordgo.MessageCreate, prefix string) {
 	// add auto to your autoresponse.
 	if strings.Contains(m.Content, prefix+"auto ") {
@@ -275,9 +271,6 @@ func (bot *Object) AddARS(s *discordgo.Session, m *discordgo.MessageCreate, pref
 }
 
 // DeleteARS - removes rule from your A.R.S.
-// bot: Main Object with all your settings.
-// s: The Current Session between the bot and discord
-// m: The Message Object sent back from Discord.
 func (bot *Object) DeleteARS(s *discordgo.Session, m *discordgo.MessageCreate, prefix string) {
 	// Command to delete a rule from the A.R.S - delauto triggername or delauto &triggername
 	if strings.HasPrefix(m.Content, prefix+"delauto ") {
@@ -323,9 +316,6 @@ func (bot *Object) DeleteARS(s *discordgo.Session, m *discordgo.MessageCreate, p
 }
 
 // InfoCommand - Displays an Embed with some information.
-// bot: Main Object with all your settings.
-// s: The Current Session between the bot and discord
-// m: The Message Object sent back from Discord.
 func (bot *Object) InfoCommand(s *discordgo.Session, m *discordgo.MessageCreate, prefix string) {
 	if m.Content == prefix+"info" {
 		t := time.Unix(0, start)
@@ -399,9 +389,6 @@ func (bot *Object) InfoCommand(s *discordgo.Session, m *discordgo.MessageCreate,
 }
 
 // ViewARS - Displays an Embed with some information.
-// bot: Main Object with all your settings.
-// s: The Current Session between the bot and discord
-// m: The Message Object sent back from Discord.
 func (bot *Object) ViewARS(s *discordgo.Session, m *discordgo.MessageCreate, prefix string) {
 	if m.Content == prefix+"viewauto" {
 		var ars map[string]string
@@ -435,9 +422,6 @@ func (bot *Object) ViewARS(s *discordgo.Session, m *discordgo.MessageCreate, pre
 }
 
 // InspectARS - Displays an Embed with some information.
-// bot: Main Object with all your settings.
-// s: The Current Session between the bot and discord
-// m: The Message Object sent back from Discord.
 func (bot *Object) InspectARS(s *discordgo.Session, m *discordgo.MessageCreate, prefix string) {
 	if strings.HasPrefix(m.Content, prefix+"inspect ") {
 		var ars map[string]string
